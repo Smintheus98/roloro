@@ -23,6 +23,7 @@ step: function [
 half-of: function [
   {Calculates the half of value}
   value [number! pair! point2D!] 
+  return: [number! pair! point2D!]
 ] [
   value / 2
 ]

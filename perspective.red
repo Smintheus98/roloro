@@ -58,7 +58,7 @@ gauss-jordan-elimination: function [
 
 perspective-transform: function [
   {Calculate transformation matrix for a perspective transformation based on 4 pairs of source and target 2D-points}
-  mapping [series! block! map!] {Map of correlation points in the form of [src: target]}
+  mapping [series! block! map!] {Map of correlation points in the form of #[src1: target1 ... ]}
   return: [block!]              {Transformation matrix (row-major)}
 ] [
   A: copy []
