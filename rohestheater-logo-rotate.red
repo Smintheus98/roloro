@@ -40,7 +40,7 @@ plane: scale * 1920x1080
 
 ; grid object with functions for rotation and tilt (perspective transform)
 grid: context [
-  size: 100002x100002
+  size: 120x120
   n-edge-pts: 5
 
   corner-points: reduce [
@@ -116,7 +116,7 @@ step cnt low high [
   img: make image! reduce [plane background]
   draw img compose [
     pen (foreground)
-    line-width 4
+    line-width (2 * scale)
     ;anti-alias off
 
     ; draw grid in 3D
