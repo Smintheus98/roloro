@@ -15,3 +15,9 @@ Afterwards the 'rohestheater'-title is put upon that grid so that is always full
 ## Notes
  - As there currently is an issue with a segmentation fault when (purely speculative) allocating too much memory in total, the program is wrapped into a script, which calls the script on a subset of the frames to be generated.
  - For stability of the grid representation the output-format is twice the size of the intended output-format and needs to be scaled down. This procedure together with a big virtual size of the 2D-grid removes jittering-effects reliably.
+
+## Todo
+ - [ ] Test if the virtual 2D-grid can be smaller when replacing pair! with point2D! for internal calculations, as pair! enforces conversion to positive integers.
+ - [ ] Center virtual 2D-grid around (0, 0) for simpler calculations
+ - [ ] Re-observe target points for perspective transform
+ - [ ] Try to calculate the 1920x1080-sized output-image internally
