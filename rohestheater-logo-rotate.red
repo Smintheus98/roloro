@@ -41,24 +41,27 @@ plane: scale * 1920x1080
 ; grid object with functions for rotation and tilt (perspective transform)
 grid: context [
   size: 100002x100002
-  pad: plane - size / 2
   n-edge-pts: 5
+
   corner-points: reduce [
-      pad
-      to-pair reduce [ pad/x + size/x  pad/y]
-      to-pair reduce [ pad/x + size/x  pad/y + size/y]
-      to-pair reduce [ pad/x           pad/y + size/y]
+      (-1, -1) * half-of size
+      ( 1, -1) * half-of size
+      ( 1,  1) * half-of size
+      (-1,  1) * half-of size
   ]
+
   edge-points: collect [
     repeat n n-edge-pts [
-      keep reduce [ reduce [
-        to-pair reduce [ size/x / (n-edge-pts + 1) * n + pad/x   pad/y ]
-        to-pair reduce [ size/x / (n-edge-pts + 1) * n + pad/x   pad/y + size/y ]
-      ]]
-      keep reduce [ reduce [
-        to-pair reduce [ pad/x           size/y / (n-edge-pts + 1) * n + pad/y ]
-        to-pair reduce [ pad/x + size/x  size/y / (n-edge-pts + 1) * n + pad/y ]
-      ]]
+      keep reduce [
+        reduce [ ; corresponding edge-points in x-direction
+          (to-point2D reduce [ size/x / (n-edge-pts + 1) * n   0      ]) - half-of size
+          (to-point2D reduce [ size/x / (n-edge-pts + 1) * n   size/y ]) - half-of size
+        ]
+        reduce [ ; corresponding edge-points in y-direction
+          (to-point2D reduce [ 0       size/y / (n-edge-pts + 1) * n ]) - half-of size
+          (to-point2D reduce [ size/x  size/y / (n-edge-pts + 1) * n ]) - half-of size
+        ]
+      ]
     ]
   ]
 
@@ -66,15 +69,15 @@ grid: context [
     ;; Application of 2D rotation matrix to [x y]-points
     collect [
       foreach pt pt-list [
-        keep to-pair reduce [ ((pt/x - half-of plane/x) * cosine deg) - ((pt/y - half-of plane/y) *   sine deg) + half-of plane/x 
-                              ((pt/x - half-of plane/x) *   sine deg) + ((pt/y - half-of plane/y) * cosine deg) + half-of plane/y ]
+        keep to-point2D reduce [ (pt/x * cosine deg) - (pt/y *   sine deg)
+                                 (pt/x *   sine deg) + (pt/y * cosine deg)]
       ]
     ]
   ]
   corner-points-rot:    func[deg [number!] return: [series!]] [ rotate corner-points deg ]
-  edge-points-rot:      func[deg [number!] return: [series!]] [ collect [ foreach edge-point-pair edge-points [ keep reduce [rotate edge-point-pair deg] ]] ]
+  edge-points-rot:      func[deg [number!] return: [series!]] [ collect [ foreach point-pair edge-points [ keep reduce [rotate point-pair deg] ]] ]
 
-  target-corner-points: reduce [ scale * 420x540 scale * 947x226 scale * 1462x366 scale * 1488x824 ]   ; outdated: [scale * 53x495 495x239 916x354 939x734]
+  target-corner-points: reduce [ scale * 420x540 scale * 947x226 scale * 1462x366 scale * 1488x824 ]
   M: perspective-transform reduce [
     corner-points/1 target-corner-points/1
     corner-points/2 target-corner-points/2
@@ -92,11 +95,11 @@ grid: context [
       ]
     ]
   ]
-  corner-points-tilt:   func[              return: [series!]] [ tilt corner-points ]
-  edge-points-tilt:     func[              return: [series!]] [ collect [ foreach edge-point-pair edge-points [ keep reduce [tilt edge-point-pair] ]] ]
+  ;corner-points-tilt:   func[return: [series!]] [ tilt corner-points ]
+  ;edge-points-tilt:     func[return: [series!]] [ collect [ foreach point-pair edge-points [ keep reduce [tilt point-pair] ]] ]
   
   corner-points-rotilt: func[deg [number!] return: [series!]] [ tilt corner-points-rot deg ]
-  edge-points-rotilt:   func[deg [number!] return: [series!]] [ collect [ foreach edge-point-pair edge-points-rot deg [ keep reduce [tilt edge-point-pair] ]] ]
+  edge-points-rotilt:   func[deg [number!] return: [series!]] [ collect [ foreach point-pair edge-points-rot deg [ keep reduce [tilt point-pair] ]] ]
 ]
 
 DejaVu-Sans: make font! compose [name: "DejaVu Sans" style: 'bold size: (scale * 95)]
