@@ -1,7 +1,10 @@
 # rohestheater-logo-rotate
 Code for rotating rohestheater logo animation
 
-## structure
+## Demo
+![image](./presentation.gif)
+
+## Structure
 This repository mainly consists of the two [Red](https://www.red-lang.org/p/about.html) files
  - `./perspective.red`
  - `./rohestheater-logo-rotate.red`
