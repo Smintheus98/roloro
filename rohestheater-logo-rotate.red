@@ -35,7 +35,7 @@ do %perspective.red
 do %utils.red
 
 ; fix global variables
-scale: 2
+scale: 1
 plane: scale * 1920x1080
 
 ; grid object with functions for rotation and tilt (perspective transform)
@@ -54,12 +54,12 @@ grid: context [
     repeat n n-edge-pts [
       keep reduce [
         reduce [ ; corresponding edge-points in x-direction
-          (to-point2D reduce [ size/x / (n-edge-pts + 1) * n   0      ]) - half-of size
-          (to-point2D reduce [ size/x / (n-edge-pts + 1) * n   size/y ]) - half-of size
+          subtract as-point2D size/x / (n-edge-pts + 1) * n  0        half-of size
+          subtract as-point2D size/x / (n-edge-pts + 1) * n  size/y   half-of size
         ]
         reduce [ ; corresponding edge-points in y-direction
-          (to-point2D reduce [ 0       size/y / (n-edge-pts + 1) * n ]) - half-of size
-          (to-point2D reduce [ size/x  size/y / (n-edge-pts + 1) * n ]) - half-of size
+          subtract as-point2D 0       size/y / (n-edge-pts + 1) * n   half-of size
+          subtract as-point2D size/x  size/y / (n-edge-pts + 1) * n   half-of size
         ]
       ]
     ]
@@ -69,8 +69,8 @@ grid: context [
     ;; Application of 2D rotation matrix to [x y]-points
     collect [
       foreach pt pt-list [
-        keep to-point2D reduce [ (pt/x * cosine deg) - (pt/y *   sine deg)
-                                 (pt/x *   sine deg) + (pt/y * cosine deg)]
+        keep as-point2D subtract pt/x * cosine deg  pt/y *   sine deg
+                        add      pt/x *   sine deg  pt/y * cosine deg
       ]
     ]
   ]
@@ -88,10 +88,8 @@ grid: context [
     ;; Application of perspective transform based on observed target corner points
     collect [
       foreach pt pt-list [
-        keep to-pair reduce [
-            (M/1/1 * pt/x) + (M/1/2 * pt/y) + M/1/3 / ((M/3/1 * pt/x) + (M/3/2 * pt/y) + M/3/3)
-            (M/2/1 * pt/x) + (M/2/2 * pt/y) + M/2/3 / ((M/3/1 * pt/x) + (M/3/2 * pt/y) + M/3/3)
-        ]
+        keep as-pair (M/1/1 * pt/x) + (M/1/2 * pt/y) + M/1/3 / ((M/3/1 * pt/x) + (M/3/2 * pt/y) + M/3/3)
+                     (M/2/1 * pt/x) + (M/2/2 * pt/y) + M/2/3 / ((M/3/1 * pt/x) + (M/3/2 * pt/y) + M/3/3)
       ]
     ]
   ]
@@ -123,7 +121,7 @@ step cnt low high [
     polygon (grid/corner-points-rotilt deg)
     (collect [
       foreach pt-pair grid/edge-points-rotilt deg [
-        keep reduce ['line first pt-pair second pt-pair]
+        keep reduce ['line pt-pair/1 pt-pair/2]
       ]
     ]) 
 
