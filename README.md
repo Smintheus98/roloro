@@ -28,4 +28,4 @@ Afterwards the 'rohestheater'-title is put upon that grid so that it is always f
  - [x] Use as-<type> instead of to-<type>, as it has cleaner syntax and might be faster
  - [x] Try to calculate the 1920x1080-sized output-image internally
  - [ ] Re-observe target points for perspective transform
- - [ ] Make GIF animation for use in README
+ - [x] Make GIF animation for use in README
