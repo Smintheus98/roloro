@@ -20,5 +20,6 @@ Afterwards the 'rohestheater'-title is put upon that grid so that it is always f
  - [x] Test if the virtual 2D-grid can be smaller when replacing pair! with point2D! for internal calculations, as pair! enforces conversion to positive integers.
  - [ ] Try using point2D! as result of tilt
  - [x] Center virtual 2D-grid around (0, 0)
+ - [ ] Use as-<type> instead of to-<type>, as it has cleaner syntax and might be faster
  - [ ] Re-observe target points for perspective transform
  - [ ] Try to calculate the 1920x1080-sized output-image internally
