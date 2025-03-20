@@ -34,23 +34,40 @@ if (length? args) >= 1 [
 do %perspective.red
 do %utils.red
 
-; fix global variables
+; global variables
 scale: 1
 plane: scale * 1920x1080
+
+foreground: white
+text-color: white
+background: black
+
+ellipse-size: scale * 755x150
+ellipse-pos: plane - ellipse-size / 2 - (scale * (-120, 52))
+
+DejaVu-Sans: make font! compose [
+  name: "DejaVu Sans"
+  size: (scale * 95)
+  style: 'bold
+  color: (text-color)
+]
+text-font: DejaVu-Sans
+text-pos: scale * 725x515
+
 
 ; grid object with functions for rotation and tilt (perspective transform)
 grid: context [
   size: 120x120
   n-edge-pts: 5
 
-  corner-points: reduce [
+  corner-pts: reduce [
       (-1, -1) * half-of size
       ( 1, -1) * half-of size
       ( 1,  1) * half-of size
       (-1,  1) * half-of size
   ]
 
-  edge-points: collect [
+  edge-pts: collect [
     repeat n n-edge-pts [
       keep reduce [
         reduce [ ; corresponding edge-points in x-direction
@@ -65,7 +82,17 @@ grid: context [
     ]
   ]
 
-  rotate: func[pt-list [series!] deg [number!] return: [series!]] [
+  target-corner-pts: reduce [ scale * 420x540 scale * 947x226 scale * 1462x366 scale * 1488x824 ]
+
+  M: perspective-transform reduce [
+    corner-pts/1 target-corner-pts/1
+    corner-pts/2 target-corner-pts/2
+    corner-pts/3 target-corner-pts/3
+    corner-pts/4 target-corner-pts/4
+  ]
+
+
+  rotate: func[pt-list [series!] deg [number!] return: [block!]] [
     ;; Application of 2D rotation matrix to [x y]-points
     collect [
       foreach pt pt-list [
@@ -74,17 +101,10 @@ grid: context [
       ]
     ]
   ]
-  corner-points-rot:    func[deg [number!] return: [series!]] [ rotate corner-points deg ]
-  edge-points-rot:      func[deg [number!] return: [series!]] [ collect [ foreach point-pair edge-points [ keep reduce [rotate point-pair deg] ]] ]
+  rotate-corner-pts: func[deg [number!] return: [block!]] [ rotate corner-pts deg ]
+  rotate-edge-pts:   func[deg [number!] return: [block!]] [ collect [ foreach pt-pair edge-pts [ keep reduce [rotate pt-pair deg] ]] ]
 
-  target-corner-points: reduce [ scale * 420x540 scale * 947x226 scale * 1462x366 scale * 1488x824 ]
-  M: perspective-transform reduce [
-    corner-points/1 target-corner-points/1
-    corner-points/2 target-corner-points/2
-    corner-points/3 target-corner-points/3
-    corner-points/4 target-corner-points/4
-  ]
-  tilt: func[pt-list [series!] return: [series!]] [
+  tilt: func[pt-list [series!] return: [block!]] [
     ;; Application of perspective transform based on observed target corner points
     collect [
       foreach pt pt-list [
@@ -93,74 +113,40 @@ grid: context [
       ]
     ]
   ]
-  ;corner-points-tilt:   func[return: [series!]] [ tilt corner-points ]
-  ;edge-points-tilt:     func[return: [series!]] [ collect [ foreach point-pair edge-points [ keep reduce [tilt point-pair] ]] ]
   
-  corner-points-rotilt: func[deg [number!] return: [series!]] [ tilt corner-points-rot deg ]
-  edge-points-rotilt:   func[deg [number!] return: [series!]] [ collect [ foreach point-pair edge-points-rot deg [ keep reduce [tilt point-pair] ]] ]
+  rotilt-corner-pts: func[deg [number!] return: [block!]] [ tilt rotate-corner-pts deg ]
+  rotilt-edge-pts:   func[deg [number!] return: [block!]] [ collect [ foreach pt-pair rotate-edge-pts deg [ keep reduce [tilt pt-pair] ]] ]
 ]
 
-DejaVu-Sans: make font! compose [name: "DejaVu Sans" style: 'bold size: (scale * 95)]
-bordeaux: 140.23.32
 
 ; main loop
 step cnt low high [
   deg: deg-inc * cnt
-  foreground: white
-  text-color: white ;bordeaux
-  background: black
-  ellipse-size: scale * 755x150
 
+  ; draw image
   img: make image! reduce [plane background]
   draw img compose [
     pen (foreground)
     line-width (2 * scale)
-    ;anti-alias off
 
     ; draw grid in 3D
-    polygon (grid/corner-points-rotilt deg)
+    polygon (grid/rotilt-corner-pts deg)
     (collect [
-      foreach pt-pair grid/edge-points-rotilt deg [
-        keep reduce ['line pt-pair/1 pt-pair/2]
+      foreach pt-pair grid/rotilt-edge-pts deg [
+        keep compose [ line (pt-pair/1) (pt-pair/2) ]
       ]
-    ]) 
+    ])
 
     ; draw ellipse
     pen off
     fill-pen (background)
-    ellipse (plane - ellipse-size / 2 - (scale * 0x52) + (scale * 120x0)) (ellipse-size)
+    ellipse (ellipse-pos) (ellipse-size)
 
     ; draw text
-    font DejaVu-Sans
-    pen (text-color)
-    text (scale * 725x515) "rohestheater"
+    font (text-font)
+    text (text-pos) "rohestheater"
   ]
 
   save to-file rejoin ["frames/rohestheater-logo-rotate-frame-" pad/left/with cnt 4 #"0" ".png"] img
 ]
-
-
-; simple tests:
-
-;print grid/corner-points
-;print grid/corner-points
-;print grid/corner-points-rot 0
-;print grid/corner-points-rot 90
-;print mold grid/edge-points
-;quit
-
-;print grid/corner-points
-;print grid/corner-points-tilt
-;img: draw plane compose [ polygon (grid/corner-points-rotilt 45) (collect [ foreach pt-pair grid/edge-points-rotilt 45 [ keep compose[line (first pt-pair) (second pt-pair)] ] ])]
-;save %test.png img
-;quit
-
-;img: draw plane compose [ polygon (grid/corner-points) (collect [ foreach pt-pair grid/edge-points [ keep compose[line (first pt-pair) (second pt-pair)] ] ])]
-;img: draw plane compose [ polygon (grid/corner-points-rot 0) (collect [ foreach pt-pair grid/edge-points-rot 0 [ keep compose[line (first pt-pair) (second pt-pair)] ] ])]
-;repeat deg 90 [
-;  img: draw plane compose [ rotate (deg) (half-of plane) polygon (grid/corner-points) (collect [ foreach pt-pair grid/edge-points [ keep compose[line (first pt-pair) (second pt-pair)] ] ])]
-;  save %dest-test-file.png img
-;  wait 0.1
-;]
-;quit
 
