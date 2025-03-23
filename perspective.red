@@ -69,8 +69,8 @@ perspective-transform: function [
   b: copy []
   ; construct equation system
   foreach [src trg] to-map mapping [
-    append/only A reduce [ src/x  src/y  1  0      0      0  src/x * trg/x * -1  src/y * trg/x * -1 ]
-    append/only A reduce [ 0      0      0  src/x  src/y  1  src/x * trg/y * -1  src/y * trg/y * -1 ]
+    append/only A reduce [ src/x  src/y  1  0      0      0  negate src/x * trg/x  negate src/y * trg/x ]
+    append/only A reduce [ 0      0      0  src/x  src/y  1  negate src/x * trg/y  negate src/y * trg/y ]
     append b reduce [ trg/x trg/y ]
   ]
   ; solve equations
