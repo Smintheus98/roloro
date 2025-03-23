@@ -27,5 +27,6 @@ Afterwards the 'rohestheater'-title is put upon that grid so that it is always f
  - [x] Center virtual 2D-grid around (0, 0)
  - [x] Use as-<type> instead of to-<type>, as it has cleaner syntax and might be faster
  - [x] Try to calculate the 1920x1080-sized output-image internally
- - [ ] Re-observe target points for perspective transform
  - [x] Make GIF animation for use in README
+ - [ ] Re-observe target points for perspective transform
+ - [ ] Implement the perspective-functions in Red/System for additional performance
