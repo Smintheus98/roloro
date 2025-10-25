@@ -6,6 +6,12 @@ Red [
   Needs: View
   License: {GNU GPL v3.0 or newer}
   Interpreter: red-view
+  Notes: {
+    - Clean rotation can be accomplished with parameters:
+        deg-inc: 0.05 low:1 high:1800
+      This will result in 1800 frames performing an 90° rotation
+      which can be converted into a 60s video using 30fps.
+  }
   Possible Improvement: {
     - (?) make ellipse gauss-blurring or almost transparent (with gradient maybe?) (?)
   }
@@ -59,6 +65,8 @@ text-pos: scale * 725x515
 grid: context [
   size: 120x120
   n-edge-pts: 5
+  line-wd: 1
+  half-line-wd: half-of line-wd
 
   corner-pts: reduce [
       (-1, -1) * half-of size
@@ -91,6 +99,29 @@ grid: context [
     corner-pts/4 target-corner-pts/4
   ]
 
+  outer-edge-boxes: reduce [ ; upper-left and lower-right points of boxes around outer edges
+    reduce [ corner-pts/1 - half-line-wd  corner-pts/1 + (-1x1 * half-line-wd)  corner-pts/2 + half-line-wd  corner-pts/2 + (1x-1 * half-line-wd) ]
+    reduce [ corner-pts/2 - half-line-wd  corner-pts/2 + (1x-1 * half-line-wd)  corner-pts/3 + half-line-wd  corner-pts/3 + (-1x1 * half-line-wd) ]
+    reduce [ corner-pts/3 + half-line-wd  corner-pts/3 + (1x-1 * half-line-wd)  corner-pts/4 - half-line-wd  corner-pts/4 + (-1x1 * half-line-wd) ]
+    reduce [ corner-pts/4 + half-line-wd  corner-pts/4 + (-1x1 * half-line-wd)  corner-pts/1 - half-line-wd  corner-pts/1 + (1x-1 * half-line-wd) ]
+  ]
+
+  inner-edge-boxes: collect [ ; upper-left and lower-right points of boxes around inner edges
+    while [not tail? edge-pts] [
+      ; y-boxes
+      edge: first edge-pts
+      keep/only reduce [ edge/1 - half-line-wd  edge/1 + (1x-1 * half-line-wd)  edge/2 + half-line-wd  edge/2 + (-1x1 * half-line-wd) ]
+      ; x-boxes
+      edge: second edge-pts
+      keep/only reduce [ edge/1 - half-line-wd  edge/1 + (-1x1 * half-line-wd)  edge/2 + half-line-wd  edge/2 + (1x-1 * half-line-wd) ]
+
+      edge-pts: skip edge-pts 2
+    ]
+    edge-pts: head edge-pts
+  ]
+
+  edge-boxes: append outer-edge-boxes inner-edge-boxes
+
 
   rotate: func[pt-list [series!] deg [number!] return: [block!]] [
     ;; Application of 2D rotation matrix to [x y]-points
@@ -101,8 +132,15 @@ grid: context [
       ]
     ]
   ]
-  rotate-corner-pts: func[deg [number!] return: [block!]] [ rotate corner-pts deg ]
-  rotate-edge-pts:   func[deg [number!] return: [block!]] [ collect [ foreach pt-pair edge-pts [ keep reduce [rotate pt-pair deg] ]] ]
+  ;rotate-corner-pts: func[deg [number!] return: [block!]] [ rotate corner-pts deg ]
+  ;rotate-edge-pts:   func[deg [number!] return: [block!]] [ collect [ foreach pt-pair edge-pts [ keep reduce [rotate pt-pair deg] ]] ]
+  rotate-edge-boxes: func[deg [number!] return: [block!]] [
+    collect [
+      foreach box edge-boxes [
+        keep reduce [ rotate box deg ]
+      ]
+    ]
+  ]
 
   tilt: func[pt-list [series!] return: [block!]] [
     ;; Application of perspective transform based on observed target corner points
@@ -114,8 +152,15 @@ grid: context [
     ]
   ]
   
-  rotilt-corner-pts: func[deg [number!] return: [block!]] [ tilt rotate-corner-pts deg ]
-  rotilt-edge-pts:   func[deg [number!] return: [block!]] [ collect [ foreach pt-pair rotate-edge-pts deg [ keep reduce [tilt pt-pair] ]] ]
+  ;rotilt-corner-pts: func[deg [number!] return: [block!]] [ tilt rotate-corner-pts deg ]
+  ;rotilt-edge-pts:   func[deg [number!] return: [block!]] [ collect [ foreach pt-pair rotate-edge-pts deg [ keep reduce [tilt pt-pair] ]] ]
+  rotilt-edge-boxes: func[deg [number!] return: [block!]] [
+    collect [
+      foreach box rotate-edge-boxes deg [
+        keep reduce [ tilt box ]
+      ]
+    ]
+  ]
 ]
 
 
@@ -127,13 +172,14 @@ step cnt low high [
   img: make image! reduce [plane background]
   draw img compose [
     pen (foreground)
-    line-width (2 * scale)
+    fill-pen (foreground)
+    line-width (1 * scale)
 
     ; draw grid in 3D
-    polygon (grid/rotilt-corner-pts deg)
+    ;polygon (grid/rotilt-corner-pts deg)
     (collect [
-      foreach pt-pair grid/rotilt-edge-pts deg [
-        keep compose [ line (pt-pair/1) (pt-pair/2) ]
+      foreach box grid/rotilt-edge-boxes deg [
+        keep compose [ polygon (box) ]
       ]
     ])
 
